@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define TILE_SIZE 16 // Define an appropriate tile size for your system's cache
+#define TILE_SIZE 32 // Define an appropriate tile size for your system's cache
 
 void matrix_multiply(float *A, float *B, float *C, int M, int N, int K) {
     #pragma omp parallel for collapse(2)

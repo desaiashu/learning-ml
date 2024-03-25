@@ -6,6 +6,13 @@
 #include <thread>
 #include <vector>
 #include <functional>
+#include <arm_neon.h>
+// #define NS_PRIVATE_IMPLEMENTATION
+// #define CA_PRIVATE_IMPLEMENTATION
+// #define MTL_PRIVATE_IMPLEMENTATION
+// #include <Foundation/Foundation.hpp>
+// #include <Metal/Metal.hpp>
+// #include <QuartzCore/QuartzCore.hpp>
 
 // Function to calculate the determinant of a matrix
 double det(double** m, int size) {
@@ -42,6 +49,26 @@ void multiply_row(double** m1, double** m2, double** result, int row, int cols1,
     }
 }
 
+void multiply_row_simd(double** m1, double** m2, double** result, int row, int cols1, int cols2) {
+
+    int block = 512;
+
+    for (int c = 0; c < cols2; ++c) {
+        float64x2_t sum = vdupq_n_f64(0); // Initialize the sum to zero
+        int d;
+        for (d = 0; d <= cols1 - block; d += block) {
+            float64x2_t vec1 = vld1q_f64(&m1[row][d]);
+            float64x2_t vec2 = vld1q_f64(&m2[d][c]);
+            sum = vaddq_f64(sum, vmulq_f64(vec1, vec2));
+        }
+        // Handle the tail case if cols1 is not a multiple of block size
+        for (; d < cols1; ++d) {
+            sum = vaddq_f64(sum, vmulq_n_f64(vld1q_dup_f64(&m1[row][d]), m2[d][c]));
+        }
+        result[row][c] = vgetq_lane_f64(sum, 0) + vgetq_lane_f64(sum, 1);
+    }
+}
+
 double** mult(double** m1, int rows1, int cols1, double** m2, int rows2, int cols2) {
     if (cols1 != rows2) {
         throw std::invalid_argument("Invalid matrix dimensions");
@@ -62,7 +89,7 @@ double** mult(double** m1, int rows1, int cols1, double** m2, int rows2, int col
     // Function to process a chunk of rows
     auto process_chunk = [&](int start_row, int end_row) {
         for (int r = start_row; r < end_row; ++r) {
-            multiply_row(m1, m2, result, r, cols1, cols2);
+            multiply_row_simd(m1, m2, result, r, cols1, cols2);
         }
     };
 
@@ -110,7 +137,7 @@ void delete_matrix(double** matrix, int size) {
 int main() {
     srand(static_cast<unsigned int>(time(nullptr))); // Seed for random number generation
 
-    int size = 1000; // Example matrix size
+    int size = 2048; // Example matrix size
     double** matrix = rand_matrix(size, size);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -134,9 +161,7 @@ int main() {
     delete_matrix(matrix, size); // Clean up memory
 
 
-    size = 1000; // Example matrix size
     double** m1 = rand_matrix(size, size);
-
     double** m2 = rand_matrix(size, size);
 
     start = std::chrono::high_resolution_clock::now();
