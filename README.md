@@ -37,6 +37,7 @@
 [Thermodynamic Compute](https://arxiv.org/ftp/arxiv/papers/1911/1911.01968.pdf)
 
 ### Minimizing compute
+[Algos for efficient deep learning](https://blog.research.google/2023/02/google-research-2022-beyond-algorithms.html?m=1)
 [1.35 bit](https://arxiv.org/pdf/2310.11453.pdf)
 [Sparse representations](https://arxiv.org/pdf/1805.10692v1.pdf)
 [Scale LLM](https://blog.fedml.ai/scalellm-unlocking-llama2-13b-llm-inference-on-consumer-gpu-rtx-4090-powered-by-fedml-nexus-ai/)
